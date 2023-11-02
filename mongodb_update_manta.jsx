@@ -20,7 +20,7 @@ async function updateData() {
     const updateResult = await collection.updateMany(
       {},
       {
-        $mul: { "mantle.$[].value": 1.1 }
+        $mul: { "manta.$[].value": 1.1 }
       }
     );
 
