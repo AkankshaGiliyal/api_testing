@@ -46,6 +46,23 @@ app.get('/manta', async (req, res) => {
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+app.get('/price', async (req, res) => {
+  try {
+    const client = new MongoClient(uri, { useUnifiedTopology: true });
+    await client.connect();
+
+    const database = client.db('sample');
+    const collection = database.collection('sample1');
+
+    const data = await collection.find().toArray();
+    client.close();
+
+    res.json(data);
+  } catch (error) {
+    console.error('Error fetching data from MongoDB (data):', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
 
 app.listen(port, '0.0.0.0',() => {
   console.log(`API server is running on port ${port}`);
