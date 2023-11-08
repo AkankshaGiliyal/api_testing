@@ -5,8 +5,8 @@ const mntABI = require('./ABI.jsx');
 const provider = new ethers.providers.JsonRpcProvider("https://pacific-rpc.manta.network/http");
 
 // MongoDB configuration
-const dbUrl = 'mongodb+srv://liltest:BI6H3uJRxYOsEsYr@cluster0.qtfou20.mongodb.net/'; // Update with your MongoDB connection URL
-const dbName = 'backend'; // Update with your database name
+const dbUrl = 'mongodb+srv://liltest:BI6H3uJRxYOsEsYr@cluster0.qtfou20.mongodb.net/';
+const dbName = 'backend'; 
 
 async function connectToDatabase() {
   const client = new MongoClient(dbUrl, { useUnifiedTopology: true });
