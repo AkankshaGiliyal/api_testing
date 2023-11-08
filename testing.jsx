@@ -12,16 +12,16 @@ const { MongoClient } = require('mongodb');
       const tvlCollection = database.collection('tvl');
       const priceCollection = database.collection('price_usd');
 
-      // Fetch TVL documents with "Chain Name" equal to "mantle"
-      const tvlDocs = await tvlCollection.find({ 'Chain Name': 'mantle' }).toArray();
+      // Fetch all TVL documents
+      const tvlDocs = await tvlCollection.find({}).toArray();
 
       for (const tvlDoc of tvlDocs) {
-        const asset = tvlDoc.id; // Assuming 'id' is the correct field name
+        const id = tvlDoc.id;
 
-        console.log(`Checking TVL document with asset: ${asset}`);
+        console.log(`Checking TVL document with asset: ${id}`);
 
         // Find the corresponding price document in 'price_usd' collection
-        const priceDoc = await priceCollection.findOne({ id: asset });
+        const priceDoc = await priceCollection.findOne({ id: { $regex: new RegExp(`^${id}$`, 'i') } });
 
         if (priceDoc) {
           // Calculate tvl_usd by multiplying price_usd and totalAssets
@@ -33,7 +33,7 @@ const { MongoClient } = require('mongodb');
           await tvlCollection.updateOne({ _id: tvlDoc._id }, { $set: { tvl_usd } });
           console.log(`Updated TVL document with _id: ${tvlDoc._id} with tvl_usd: ${tvl_usd}`);
         } else {
-          console.error(`Price document not found for asset: ${asset}`);
+          console.error(`Price document not found for asset: ${id}`);
         }
       }
 
