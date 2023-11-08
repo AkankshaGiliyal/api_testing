@@ -51,8 +51,8 @@ app.get('/price', async (req, res) => {
     const client = new MongoClient(uri, { useUnifiedTopology: true });
     await client.connect();
 
-    const database = client.db('sample');
-    const collection = database.collection('sample1');
+    const database = client.db('backend');
+    const collection = database.collection('price_usd');
 
     const data = await collection.find().toArray();
     client.close();
