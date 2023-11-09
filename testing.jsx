@@ -27,7 +27,8 @@ const { MongoClient } = require('mongodb');
           // Calculate tvl_usd by multiplying price_usd and totalAssets
           const price_usd = parseFloat(priceDoc.price_usd);
           const totalAssets = parseFloat(tvlDoc.totalAssets);
-          const tvl_usd = price_usd * totalAssets;
+          const decimal = tvlDoc.decimal || 0; 
+          const tvl_usd = (price_usd * totalAssets) / Math.pow(10, decimal);
 
           // Update the TVL document with tvl_usd
           await tvlCollection.updateOne({ _id: tvlDoc._id }, { $set: { tvl_usd } });
