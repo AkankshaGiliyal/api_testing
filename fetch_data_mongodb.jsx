@@ -121,6 +121,29 @@ app.get('/tvl_usd_sum', async (req, res) => {
   }
 });
 
+app.get('/allvaults', async (req, res) => {
+  try {
+    const client = new MongoClient(uri, { useUnifiedTopology: true });
+    await client.connect();
+
+    const database = client.db('backend');
+    const collection1 = database.collection('tvl');
+    const collection2 = database.collection('tvl_manta');
+
+    const projection = { _id: 0 }; 
+
+    const data1 = await collection1.find({}, projection).toArray();
+    const data2 = await collection2.find({}, projection).toArray();
+
+    client.close();
+
+    res.json({ tvl: data1, tvl_manta: data2 });
+  } catch (error) {
+    console.error('Error fetching TVL data:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
 app.listen(port, '0.0.0.0',() => {
   console.log(`API server is running on port ${port}`);
 });
