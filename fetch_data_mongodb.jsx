@@ -69,28 +69,57 @@ app.get('/tvl_usd_sum', async (req, res) => {
     const client = new MongoClient(uri, { useUnifiedTopology: true });
     await client.connect();
 
-    const database = client.db('backend'); 
-    const collection = database.collection('tvl');
+    const database = client.db('backend');
+    const collection1 = database.collection('tvl');
+    const collection2 = database.collection('tvl_manta');
 
-    
-    const sumResult = await collection.aggregate([
+    const pipeline1 = [
       {
         $group: {
           _id: null,
-          total: { $sum: '$tvl_usd' },
+          totalCollection1: { $sum: '$tvl_usd' },
         },
       },
-    ]).toArray();
+      {
+        $project: {
+          _id: 0,
+          totalCollection1: 1,
+        },
+      },
+    ];
+
+    const pipeline2 = [
+      {
+        $group: {
+          _id: null,
+          totalCollection2: { $sum: '$tvl_usd' }, 
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          totalCollection2: 1,
+        },
+      },
+    ];
+
+    const [result1, result2] = await Promise.all([
+      collection1.aggregate(pipeline1).toArray(),
+      collection2.aggregate(pipeline2).toArray(),
+    ]);
 
     client.close();
 
-    res.json({ sum: sumResult[0].total });
+    const sum1 = result1[0]?.totalCollection1 || 0;
+    const sum2 = result2[0]?.totalCollection2 || 0;
+    const combinedSum = sum1 + sum2;
+
+    res.json({ sum: combinedSum });
   } catch (error) {
-    console.error('Error calculating TVL sum:', error);
+    console.error('Error calculating combined TVL sum:', error);
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
-
 
 app.listen(port, '0.0.0.0',() => {
   console.log(`API server is running on port ${port}`);
