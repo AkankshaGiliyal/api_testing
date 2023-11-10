@@ -5,7 +5,7 @@ const mntABI = require('./ABI.jsx');
 const provider = new ethers.providers.JsonRpcProvider("https://pacific-rpc.manta.network/http");
 
 // MongoDB configuration
-const dbUrl = 'mongodb+srv://liltest:BI6H3uJRxYOsEsYr@cluster0.qtfou20.mongodb.net/';
+const dbUrl = 'mongodb+srv://liltest:BI6H3uJRxYOsEsYr@cluster0.qtfou20.mongodb.net/'; 
 const dbName = 'backend'; 
 
 async function connectToDatabase() {
@@ -37,7 +37,7 @@ const addressFunctions = [
   },
   {
     address: "0x5f247B216E46fD86A09dfAB377d9DBe62E9dECDA",
-    processFunction: (totalAssets) => totalAssets/1 
+    processFunction: (totalAssets) => totalAssets/1
   },
   
   
@@ -52,7 +52,7 @@ async function fetchTotalAssetsWithFunction(address, processFunction) {
     const processedValue = processFunction(totalAssets);
 
     const db = await connectToDatabase();
-    const collection = db.collection('tvl'); // Update with your collection name
+    const collection = db.collection('tvl_manta'); 
 
     // Update the existing document with the new TVL value
     const filter = { "Vault Address": address };
@@ -62,7 +62,7 @@ async function fetchTotalAssetsWithFunction(address, processFunction) {
       },
     };
 
-    const result = await collection.updateOne(filter, updateDocument);
+    const result = await collection.updateOne(filter, updateDocument, { upsert: true });
 
     if (result.modifiedCount === 1) {
       console.log(`Total Assets for ${address} (processed) updated in MongoDB:`, processedValue);
