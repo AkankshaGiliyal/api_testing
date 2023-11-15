@@ -75,10 +75,19 @@ async function fetchTotalAssetsWithFunction(address, processFunction) {
 }
 
 // calling function for each address-function pair in the array
-for (const { address, processFunction } of addressFunctions) {
-  fetchTotalAssetsWithFunction(address, processFunction);
+async function updateTotalAssets() {
+  for (const { address, processFunction } of addressFunctions) {
+    await fetchTotalAssetsWithFunction(address, processFunction);
+  }
 }
 
+// run the function immediately to start the process
+updateTotalAssets();
+
+// schedule the function to run every ten minutes
+const interval = setInterval(async () => {
+  await updateTotalAssets();
+}, 10 * 60 * 1000); // 10 minutes in milliseconds
 
 
 
