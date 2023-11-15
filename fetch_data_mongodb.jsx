@@ -144,6 +144,33 @@ app.get('/allvaults', async (req, res) => {
   }
 });
 
+app.get('/xriv/users/:walletAddress', async (req, res) => {
+  try {
+    const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
+    await client.connect();
+
+    const db = client.db('xRIV'); 
+    const collection = db.collection('users'); 
+
+    const walletAddress = req.params.walletAddress;
+
+    // find the user document by wallet address
+    const user = await collection.findOne({ wallet_address: walletAddress });
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    client.close();
+
+    
+    res.json(user);
+  } catch (error) {
+    console.error('Error fetching user data:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
 app.listen(port, '0.0.0.0',() => {
   console.log(`API server is running on port ${port}`);
 });
