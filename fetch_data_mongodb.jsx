@@ -123,17 +123,31 @@ app.get('/tvl_usd_sum', async (req, res) => {
 
 app.get('/allvaults', async (req, res) => {
   try {
+    const chainName = req.query.chain_name;
+
     const client = new MongoClient(uri, { useUnifiedTopology: true });
     await client.connect();
 
     const database = client.db('backend');
-    const collection1 = database.collection('tvl');
-    const collection2 = database.collection('tvl_manta');
 
-    const projection = { _id: 0 }; 
+    let collection1 = database.collection('tvl');
+    let collection2 = database.collection('tvl_manta');
 
-    const data1 = await collection1.find({}, projection).toArray();
-    const data2 = await collection2.find({}, projection).toArray();
+    const projection = { _id: 0 };
+
+    let data1 = [];
+    let data2 = [];
+
+    if (chainName === 'mantle') {
+      collection1 = database.collection('tvl');
+      data1 = await collection1.find({}, projection).toArray();
+    } else if (chainName === 'manta') {
+      collection2 = database.collection('tvl_manta');
+      data2 = await collection2.find({}, projection).toArray();
+    } else {
+      data1 = await collection1.find({}, projection).toArray();
+      data2 = await collection2.find({}, projection).toArray();
+    }
 
     client.close();
 
@@ -143,6 +157,55 @@ app.get('/allvaults', async (req, res) => {
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+
+
+app.get('/allvaults/dex', async (req, res) => {
+  const dexValue = req.query.dex;
+  const dbName= 'backend';
+
+  if (!dexValue) {
+    return res.status(400).json({ error: 'Dex value is missing in the request.' });
+  }
+
+  try {
+    const client = await MongoClient.connect(`${uri}/${dbName}`, { useNewUrlParser: true, useUnifiedTopology: true });
+    const db = client.db(dbName);
+
+    const [tvlCount, tvlMantaCount] = await Promise.all([
+      db.collection('tvl').countDocuments({ dex: dexValue }),
+      db.collection('tvl_manta').countDocuments({ dex: dexValue })
+    ]);
+
+    const [tvlSum, tvlMantaSum] = await Promise.all([
+      calculateSum(db.collection('tvl'), dexValue),
+      calculateSum(db.collection('tvl_manta'), dexValue)
+    ]);
+
+    const totalSum = tvlSum + tvlMantaSum;
+
+    res.json({
+      mantle_count: tvlCount,
+      manta_count: tvlMantaCount,
+      total_sum: totalSum
+    });
+
+    client.close();
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+async function calculateSum(collection, dexValue) {
+  const documents = await collection.find({ dex: dexValue }).toArray();
+  let sum = 0;
+
+  documents.forEach((doc) => {
+    sum += doc.tvl_usd || 0; 
+  });
+
+  return sum;
+}
+
 
 app.get('/xriv/users/:walletAddress', async (req, res) => {
   try {
