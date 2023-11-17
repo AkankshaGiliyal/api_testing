@@ -161,50 +161,31 @@ app.get('/allvaults', async (req, res) => {
 
 app.get('/allvaults/dex', async (req, res) => {
   const dexValue = req.query.dex;
-  const dbName= 'backend';
 
   if (!dexValue) {
     return res.status(400).json({ error: 'Dex value is missing in the request.' });
   }
 
   try {
-    const client = await MongoClient.connect(`${uri}/${dbName}`, { useNewUrlParser: true, useUnifiedTopology: true });
-    const db = client.db(dbName);
+    const client = await MongoClient.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true });
+    const db = client.db('backend'); // Replace 'backend' with your actual database name
 
-    const [tvlCount, tvlMantaCount] = await Promise.all([
-      db.collection('tvl').countDocuments({ dex: dexValue }),
-      db.collection('tvl_manta').countDocuments({ dex: dexValue })
-    ]);
+    const collection1 = db.collection('tvl');
+    const collection2 = db.collection('tvl_manta');
 
-    const [tvlSum, tvlMantaSum] = await Promise.all([
-      calculateSum(db.collection('tvl'), dexValue),
-      calculateSum(db.collection('tvl_manta'), dexValue)
-    ]);
+    const projection = { _id: 0 };
 
-    const totalSum = tvlSum + tvlMantaSum;
-
-    res.json({
-      mantle_count: tvlCount,
-      manta_count: tvlMantaCount,
-      total_sum: totalSum
-    });
+    const data1 = await collection1.find({ dex: dexValue }, projection).toArray();
+    const data2 = await collection2.find({ dex: dexValue }, projection).toArray();
 
     client.close();
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+
+    res.json({ tvl: data1, tvl_manta: data2 });
+  } catch (error) {
+    console.error('Error fetching data:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
   }
 });
-
-async function calculateSum(collection, dexValue) {
-  const documents = await collection.find({ dex: dexValue }).toArray();
-  let sum = 0;
-
-  documents.forEach((doc) => {
-    sum += doc.tvl_usd || 0; 
-  });
-
-  return sum;
-}
 
 
 app.get('/xriv/users/:walletAddress', async (req, res) => {
