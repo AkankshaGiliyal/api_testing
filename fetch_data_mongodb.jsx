@@ -159,7 +159,7 @@ app.get('/vaults', async (req, res) => {
 });
 
 
-app.get('/vaults', async (req, res) => {
+app.get('/vaults/dex', async (req, res) => {
   const dexValue = req.query.dex;
 
   if (!dexValue) {
@@ -215,7 +215,7 @@ app.get('/xriv/users/:walletAddress', async (req, res) => {
   }
 });
 
-app.get('/vault/stats', async (req, res) => {
+app.get('/vaults/stats', async (req, res) => {
   try {
     const client = await MongoClient.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true });
     const db = client.db('vaults');
