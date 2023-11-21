@@ -6,7 +6,7 @@ let fetch;
   fetch = fetchModule.default; 
 
   const uri = 'mongodb+srv://liltest:BI6H3uJRxYOsEsYr@cluster0.qtfou20.mongodb.net/';
-  const dbName = 'backend';
+  const dbName = 'vaults';
   const apiUrl = 'https://api.geckoterminal.com/api/v2/networks/manta-pacific/tokens/multi/0xf417f5a458ec102b90352f697d6e2ac3a3d2851f%2C0xb73603c5d87fa094b7314c74ace2e64d165016fb%2C0x0dc808adce2099a9f62aa87d9670745aba741746';
 
   async function fetchAndInsertData() {
@@ -18,7 +18,7 @@ let fetch;
         const client = new MongoClient(uri, { useUnifiedTopology: true });
         await client.connect();
         const database = client.db(dbName);
-        const collection = database.collection('price_usd');
+        const collection = database.collection('coingecko');
 
         for (const item of data.data) {
           const { id, attributes: { price_usd } } = item;
@@ -45,6 +45,7 @@ let fetch;
   // Schedule periodic data updates (e.g., every 10 minutes)
   setInterval(fetchAndInsertData, 600000);
 })();
+
 
 
 
