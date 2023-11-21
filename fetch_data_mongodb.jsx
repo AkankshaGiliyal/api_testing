@@ -46,13 +46,13 @@ app.get('/manta', async (req, res) => {
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
-app.get('/price', async (req, res) => {
+app.get('/oracle/coingecko', async (req, res) => {
   try {
     const client = new MongoClient(uri, { useUnifiedTopology: true });
     await client.connect();
 
-    const database = client.db('backend');
-    const collection = database.collection('price_usd');
+    const database = client.db('vaults');
+    const collection = database.collection('coingecko');
 
     const data = await collection.find().toArray();
     client.close();
@@ -69,15 +69,15 @@ app.get('/tvl_usd_sum', async (req, res) => {
     const client = new MongoClient(uri, { useUnifiedTopology: true });
     await client.connect();
 
-    const database = client.db('backend');
-    const collection1 = database.collection('tvl');
-    const collection2 = database.collection('tvl_manta');
+    const database = client.db('vaults');
+    const collection1 = database.collection('mantle');
+    const collection2 = database.collection('manta-pacific');
 
     const pipeline1 = [
       {
         $group: {
           _id: null,
-          totalCollection1: { $sum: '$tvl_usd' },
+          totalCollection1: { $sum: '$tvlUSD' },
         },
       },
       {
@@ -92,7 +92,7 @@ app.get('/tvl_usd_sum', async (req, res) => {
       {
         $group: {
           _id: null,
-          totalCollection2: { $sum: '$tvl_usd' }, 
+          totalCollection2: { $sum: '$tvlUSD' }, 
         },
       },
       {
@@ -121,17 +121,17 @@ app.get('/tvl_usd_sum', async (req, res) => {
   }
 });
 
-app.get('/allvaults', async (req, res) => {
+app.get('/vaults', async (req, res) => {
   try {
-    const chainName = req.query.chain_name;
+    const chainName = req.query.chain;
 
     const client = new MongoClient(uri, { useUnifiedTopology: true });
     await client.connect();
 
-    const database = client.db('backend');
+    const database = client.db('vaults');
 
-    let collection1 = database.collection('tvl');
-    let collection2 = database.collection('tvl_manta');
+    let collection1 = database.collection('mantle');
+    let collection2 = database.collection('manta-pacific');
 
     const projection = { _id: 0 };
 
@@ -139,10 +139,10 @@ app.get('/allvaults', async (req, res) => {
     let data2 = [];
 
     if (chainName === 'mantle') {
-      collection1 = database.collection('tvl');
+      collection1 = database.collection('mantle');
       data1 = await collection1.find({}, projection).toArray();
-    } else if (chainName === 'manta') {
-      collection2 = database.collection('tvl_manta');
+    } else if (chainName === 'manta-pacific') {
+      collection2 = database.collection('manta-pacific');
       data2 = await collection2.find({}, projection).toArray();
     } else {
       data1 = await collection1.find({}, projection).toArray();
@@ -151,7 +151,7 @@ app.get('/allvaults', async (req, res) => {
 
     client.close();
 
-    res.json({ tvl: data1, tvl_manta: data2 });
+    res.json([...data1, ...data2]);
   } catch (error) {
     console.error('Error fetching TVL data:', error);
     res.status(500).json({ error: 'Internal Server Error' });
@@ -159,7 +159,7 @@ app.get('/allvaults', async (req, res) => {
 });
 
 
-app.get('/allvaults/dex', async (req, res) => {
+app.get('/vaults', async (req, res) => {
   const dexValue = req.query.dex;
 
   if (!dexValue) {
@@ -168,10 +168,10 @@ app.get('/allvaults/dex', async (req, res) => {
 
   try {
     const client = await MongoClient.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true });
-    const db = client.db('backend'); // Replace 'backend' with your actual database name
+    const db = client.db('vaults'); 
 
-    const collection1 = db.collection('tvl');
-    const collection2 = db.collection('tvl_manta');
+    const collection1 = db.collection('mantle');
+    const collection2 = db.collection('manta-pacific');
 
     const projection = { _id: 0 };
 
@@ -180,7 +180,7 @@ app.get('/allvaults/dex', async (req, res) => {
 
     client.close();
 
-    res.json({ tvl: data1, tvl_manta: data2 });
+    res.json([...data1, ...data2]);
   } catch (error) {
     console.error('Error fetching data:', error);
     res.status(500).json({ error: 'Internal Server Error' });
@@ -196,10 +196,10 @@ app.get('/xriv/users/:walletAddress', async (req, res) => {
     const db = client.db('xRIV'); 
     const collection = db.collection('users'); 
 
-    const walletAddress = req.params.walletAddress;
+    const walletAddress1 = req.params.walletAddress;
 
     // find the user document by wallet address
-    const user = await collection.findOne({ wallet_address: walletAddress });
+    const user = await collection.findOne({ walletAddress: walletAddress1 });
 
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
@@ -218,8 +218,42 @@ app.get('/xriv/users/:walletAddress', async (req, res) => {
 app.get('/vault/stats', async (req, res) => {
   try {
     const client = await MongoClient.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true });
-    const db = client.db('backend');
+    const db = client.db('vaults');
     const collection = db.collection('stats');
+
+    const data = await collection.find({}).toArray();
+
+    client.close();
+
+    res.json(data);
+  } catch (error) {
+    console.error('Error fetching data from stats collection:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+app.get('/static/chain', async (req, res) => {
+  try {
+    const client = await MongoClient.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true });
+    const db = client.db('static');
+    const collection = db.collection('chain');
+
+    const data = await collection.find({}).toArray();
+
+    client.close();
+
+    res.json(data);
+  } catch (error) {
+    console.error('Error fetching data from stats collection:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+app.get('/static/dex', async (req, res) => {
+  try {
+    const client = await MongoClient.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true });
+    const db = client.db('static');
+    const collection = db.collection('dex');
 
     const data = await collection.find({}).toArray();
 
