@@ -6,7 +6,7 @@ const provider = new ethers.providers.JsonRpcProvider("https://pacific-rpc.manta
 
 // MongoDB configuration
 const dbUrl = 'mongodb+srv://liltest:BI6H3uJRxYOsEsYr@cluster0.qtfou20.mongodb.net/'; 
-const dbName = 'backend'; 
+const dbName = 'vaults'; 
 
 async function connectToDatabase() {
   const client = new MongoClient(dbUrl, { useUnifiedTopology: true });
@@ -52,10 +52,10 @@ async function fetchTotalAssetsWithFunction(address, processFunction) {
     const processedValue = processFunction(totalAssets);
 
     const db = await connectToDatabase();
-    const collection = db.collection('tvl_manta'); 
+    const collection = db.collection('manta-pacific'); 
 
     // Update the existing document with the new TVL value
-    const filter = { "Vault Address": address };
+    const filter = { "vaultAdress": address };
     const updateDocument = {
       $set: {
         totalTvlCap: processedValue,
@@ -78,6 +78,9 @@ async function fetchTotalAssetsWithFunction(address, processFunction) {
 for (const { address, processFunction } of addressFunctions) {
   fetchTotalAssetsWithFunction(address, processFunction);
 }
+
+
+
 
 
 
