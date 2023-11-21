@@ -1,7 +1,7 @@
 const { MongoClient } = require('mongodb');
 
 const uri = 'mongodb+srv://liltest:BI6H3uJRxYOsEsYr@cluster0.qtfou20.mongodb.net/';
-const dbName = 'backend';
+const dbName = 'vaults';
 
 async function updateStats() {
   const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
@@ -11,33 +11,33 @@ async function updateStats() {
 
     const database = client.db(dbName);
     const statsCollection = database.collection('stats');
-    const tvlCollection = database.collection('tvl');
-    const tvlMantaCollection = database.collection('tvl_manta');
+    const tvlCollection = database.collection('mantle');
+    const tvlMantaCollection = database.collection('manta-pacific');
 
     const statsDocuments = await statsCollection.find({}).toArray();
 
     for (const doc of statsDocuments) {
-      const chainNameStats = doc.chain_name; 
+      const chainNameStats = doc.chain; 
       const dex = doc.dex;
 
-      const tvlCount = await tvlCollection.countDocuments({ 'Chain Name': chainNameStats, dex });
-      const tvlMantaCount = await tvlMantaCollection.countDocuments({ 'Chain Name': chainNameStats, dex });
+      const tvlCount = await tvlCollection.countDocuments({ 'chain': chainNameStats, dex });
+      const tvlMantaCount = await tvlMantaCollection.countDocuments({ 'chain': chainNameStats, dex });
 
-      const tvlDocuments = await tvlCollection.find({ 'Chain Name': chainNameStats, dex }).toArray();
-      const tvlMantaDocuments = await tvlMantaCollection.find({ 'Chain Name': chainNameStats, dex }).toArray();
+      const tvlDocuments = await tvlCollection.find({ 'chain': chainNameStats, dex }).toArray();
+      const tvlMantaDocuments = await tvlMantaCollection.find({ 'chain': chainNameStats, dex }).toArray();
 
-      const tvlSum = tvlDocuments.reduce((sum, tvlDoc) => sum + (tvlDoc.tvl_usd || 0), 0);
-      const tvlMantaSum = tvlMantaDocuments.reduce((sum, tvlMantaDoc) => sum + (tvlMantaDoc.tvl_usd || 0), 0);
+      const tvlSum = tvlDocuments.reduce((sum, tvlDoc) => sum + (tvlDoc.tvlUSD || 0), 0);
+      const tvlMantaSum = tvlMantaDocuments.reduce((sum, tvlMantaDoc) => sum + (tvlMantaDoc.tvlUSD || 0), 0);
 
       const totalSum = tvlSum + tvlMantaSum;
 
       
       await statsCollection.updateOne(
-        { chain_name: chainNameStats, dex },
+        { chain: chainNameStats, dex },
         {
           $set: {
-            total_vaults: tvlCount + tvlMantaCount, 
-            tvl_usd: totalSum 
+            totalVaults: tvlCount + tvlMantaCount, 
+            tvlUSD: totalSum 
           }
         }
       );
