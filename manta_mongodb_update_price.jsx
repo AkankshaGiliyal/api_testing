@@ -26,7 +26,7 @@ let fetch;
           // Extract the desired part of the id
           const extractedId = id.split('_')[1];
 
-          await collection.updateOne({ id: extractedId }, { $set: { price_usd } }, { upsert: true });
+          await collection.updateOne({ denominationAssetAddress: extractedId }, { $set: { priceUSD: price_usd } }, { upsert: true });
           console.log(`Updated document with id: ${extractedId}`);
         }
 
@@ -39,12 +39,14 @@ let fetch;
     }
   }
 
-  // Fetch and insert data initially
-  fetchAndInsertData();
-
-  // Schedule periodic data updates (e.g., every 10 minutes)
+  
   setInterval(fetchAndInsertData, 600000);
+
+  
+  fetchAndInsertData();
 })();
+
+
 
 
 
