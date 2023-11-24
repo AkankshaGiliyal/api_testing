@@ -48,7 +48,7 @@ const { MongoClient } = require('mongodb');
   updateTVLData();
 
   // Schedule periodic updates
-  setInterval(updateTVLData, 600000);
+  setInterval(updateTVLData, 60000);
 })();
 
 
