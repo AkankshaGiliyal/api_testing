@@ -23,7 +23,7 @@ let fetch;
         for (const item of data.data) {
           const { id, attributes: { price_usd } } = item;
 
-          // Extract the desired part of the id
+          // to extract only the address, e.g ox123 instead of mantle_0x123..
           const extractedId = id.split('_')[1];
 
           await collection.updateOne({ denominationAssetAddress: extractedId }, { $set: { priceUSD: price_usd } }, { upsert: true });
