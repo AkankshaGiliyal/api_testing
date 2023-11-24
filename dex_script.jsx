@@ -56,4 +56,4 @@ updateStats();
 setInterval(() => {
   console.log('Running the updateStats function...');
   updateStats();
-}, 30 * 60 * 1000);
+}, 1 * 60 * 1000);
