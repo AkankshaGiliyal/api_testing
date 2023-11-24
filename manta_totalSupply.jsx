@@ -86,7 +86,7 @@ updateTotalAssets();
 
 const interval = setInterval(async () => {
   await updateTotalAssets();
-}, 10 * 60 * 1000);
+}, 1 * 60 * 1000);
 
 
 
