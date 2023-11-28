@@ -17,66 +17,43 @@ async function connectToDatabase() {
   }
 }
 
-const addressFunctions = [
-  {
-    address: "0xfa944c1996efBF9FbFF1a378903F4AD82C172D72",
-    processFunction: (totalAssets) => totalAssets / 1
-  },
-  {
-    address: "0x945438ef559EFf400429DFb101e57a6299B5ceE2",
-    processFunction: (totalAssets) => totalAssets / 1
-  },
-  {
-    address: "0xA25d1843eedE1E1D0631b979da605606412e64f7",
-    processFunction: (totalAssets) => totalAssets / 1
-  },
-  {
-    address: "0xAa81F912D09Fd313Bbc1d5638632aB6bf59aB495",
-    processFunction: (totalAssets) => totalAssets / 1
-  },
-  {
-    address: "0x0DB2BA00bCcf4F5e20b950bF954CAdF768D158Aa",
-    processFunction: (totalAssets) => totalAssets / 1
-  },
-  {
-    address: "0x713C1300f82009162cC908dC9D82304A51F05A3E",
-    processFunction: (totalAssets) => totalAssets / 1
-  },
-  {
-    address: "0xDc63179CC57783493DD8a4Ffd7367DF489Ae93BF",
-    processFunction: (totalAssets) => totalAssets / 1
-  },
-  {
-    address: "0x5f247B216E46fD86A09dfAB377d9DBe62E9dECDA",
-    processFunction: (totalAssets) => totalAssets / 1
-  },
-  
-];
-
-
-async function fetchTotalAssetsWithFunction(client, address, processFunction) {
+async function fetchTotalAssetsWithFunction(client, address) {
   try {
     const db = client.db(dbName);
     const collection = db.collection('mantle');
 
     const contract = new ethers.Contract(address, mntABI, provider);
-    const totalAssets = await contract.totalAssets();
-    const processedValue = processFunction(totalAssets);
+    const totalAssets1 = await contract.totalAssets();
+    const totalAssets=totalAssets1.toString();
 
     const filter = { "vaultAddress": address };
     const updateDocument = {
-      $set: { totalAssets: processedValue },
+      $set: { totalAssets: totalAssets },
     };
 
     const result = await collection.updateOne(filter, updateDocument);
 
     if (result.modifiedCount === 1) {
-      console.log(`Total Assets for ${address} (processed) updated in MongoDB:`, processedValue);
+      console.log(`Total Supply for ${address} updated in MongoDB:`, totalAssets);
     } else {
       console.error(`Document for ${address} not found in MongoDB.`);
     }
   } catch (error) {
-    console.error(`Error fetching and updating total assets for ${address}:`, error);
+    console.error(`Error fetching and updating total supply for ${address}:`, error);
+  }
+}
+
+async function fetchAddressesFromDB(client) {
+  try {
+    const db = client.db(dbName);
+    const collection = db.collection('mantle');
+
+    const addresses = await collection.distinct('vaultAddress');
+
+    return addresses;
+  } catch (error) {
+    console.error('Error fetching addresses from MongoDB:', error);
+    throw error;
   }
 }
 
@@ -84,8 +61,11 @@ async function updateTotalAssets() {
   let client;
   try {
     client = await connectToDatabase();
-    for (const { address, processFunction } of addressFunctions) {
-      await fetchTotalAssetsWithFunction(client, address, processFunction);
+    
+    const addresses = await fetchAddressesFromDB(client);
+    
+    for (const address of addresses) {
+      await fetchTotalAssetsWithFunction(client, address);
     }
   } catch (error) {
     console.error('Error updating total assets:', error);
@@ -100,7 +80,7 @@ updateTotalAssets();
 
 const interval = setInterval(async () => {
   await updateTotalAssets();
-}, 1 * 60 * 1000);
+}, 10 * 60 * 1000);
 
 
 
