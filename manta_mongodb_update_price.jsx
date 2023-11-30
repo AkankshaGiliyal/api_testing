@@ -40,7 +40,7 @@ let fetch;
   }
 
   
-  setInterval(fetchAndInsertData, 60000);
+  setInterval(fetchAndInsertData, 600000);
 
   
   fetchAndInsertData();
