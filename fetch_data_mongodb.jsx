@@ -1,10 +1,18 @@
 const express = require('express');
 const { MongoClient } = require('mongodb');
 const cors = require('cors');
+const https = require('https');
+const fs = require('fs');
 
 const app = express();
-const port = 80;
+const port = 443;
 app.use(cors());
+
+const options = {
+  key: fs.readFileSync('/etc/letsencrypt/live/api.rivera.money/privkey.pem'),
+  cert: fs.readFileSync('/etc/letsencrypt/live/api.rivera.money/fullchain.pem')
+};
+
 
 // mongoDB connection URI
 const uri = 'mongodb+srv://liltest:BI6H3uJRxYOsEsYr@cluster0.qtfou20.mongodb.net/';
@@ -268,6 +276,6 @@ app.get('/static/dex', async (req, res) => {
   }
 });
 
-app.listen(port, '0.0.0.0',() => {
+https.createServer(options, app).listen(port, () => {
   console.log(`API server is running on port ${port}`);
 });
