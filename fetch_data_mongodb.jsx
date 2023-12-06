@@ -22,8 +22,8 @@ app.get('/mantle', async (req, res) => {
     const client = new MongoClient(uri, { useNewUrlParser: true });
     await client.connect();
 
-    const db = client.db('fetchdata');
-    const collection = db.collection('fetchdata1');
+    const db = client.db('vaults');
+    const collection = db.collection('mantle');
 
     // fetching the data from MongoDB
     const data = await collection.find({}).toArray();
@@ -42,8 +42,8 @@ app.get('/manta', async (req, res) => {
     const client = new MongoClient(uri, { useNewUrlParser: true });
     await client.connect();
 
-    const db = client.db('fetchdata');
-    const collection = db.collection('fetchdata2');
+    const db = client.db('vaults');
+    const collection = db.collection('manta-pacific');
 
     // fetching the data from the second collection
     const data = await collection.find({}).toArray();
