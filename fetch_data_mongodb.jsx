@@ -276,6 +276,36 @@ app.get('/static/dex', async (req, res) => {
   }
 });
 
+app.get('/quant', async (req, res) => {
+  try {
+    const client = new MongoClient(uri, { useUnifiedTopology: true });
+    await client.connect();
+
+    const db = client.db('vaults');
+    const collection1 = db.collection('mantle');
+    const collection2 = db.collection('manta-pacific');
+
+    const { value } = req.query; 
+
+    let filter = {};
+    if (value === 'true') {
+      filter = { quant: true };
+    } else if (value === 'false') {
+      filter = { quant: false };
+    }
+
+    const data1 = await collection1.find(filter).toArray();
+    const data2 = await collection2.find(filter).toArray();
+
+    client.close();
+
+    res.json({ collection1: data1, collection2: data2 });
+  } catch (error) {
+    console.error('Error handling /quant route:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
 https.createServer(options, app).listen(port, () => {
   console.log(`API server is running on port ${port}`);
 });
