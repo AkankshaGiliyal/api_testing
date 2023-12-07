@@ -26,19 +26,21 @@ async function fetchDataFromContract(client, address) {
 
     const totalAssets1 = await contract.totalAssets();
     const totalSupply = await contract.totalSupply();
+    const totalTvlCap = await contract.totalTvlCap();
 
     const totalAssets = totalAssets1.toString();
     const supply = totalSupply.toString();
+    const tvlcap = totalTvlCap.toString();
 
     const filter = { "vaultAddress": address };
     const updateDocument = {
-      $set: { totalAssets: totalAssets, totalSupply: supply },
+      $set: { totalAssets: totalAssets, totalSupply: supply, totalTvlCap: tvlcap },
     };
 
     const result = await collection.updateOne(filter, updateDocument);
 
     if (result.modifiedCount === 1) {
-      console.log(`Data for ${address} updated in MongoDB:`, { totalAssets, supply });
+      console.log(`Data for ${address} updated in MongoDB:`, { totalAssets, supply, tvlcap });
     } else {
       console.error(`Document for ${address} not found in MongoDB.`);
     }
