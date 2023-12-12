@@ -4,6 +4,7 @@ const mntABI = require('./ABI.jsx');
 
 const provider1 = new ethers.providers.JsonRpcProvider("https://pacific-rpc.manta.network/http");
 const provider2 = new ethers.providers.JsonRpcProvider("https://rpc.mantle.xyz");
+const provider3 = new ethers.providers.JsonRpcProvider("https://mainnet.telos.net/evm");
 
 const dbUrl = 'mongodb+srv://liltest:BI6H3uJRxYOsEsYr@cluster0.qtfou20.mongodb.net/';
 const dbName = 'vaults';
@@ -90,6 +91,8 @@ updateData(provider1, 'manta-pacific');
 // Update using the second provider and collection
 updateData(provider2, 'mantle');
 
+updateData(provider3, 'telos');
+
 const interval1 = setInterval(async () => {
   await updateData(provider1, 'manta-pacific');
 }, 30 * 1000);
@@ -98,6 +101,9 @@ const interval2 = setInterval(async () => {
   await updateData(provider2, 'mantle');
 }, 30 * 1000);
 
+const interval3 = setInterval(async () => {
+  await updateData(provider3, 'telos');
+}, 30 * 1000);
 
 
 
