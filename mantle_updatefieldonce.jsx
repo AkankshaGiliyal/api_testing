@@ -17,7 +17,13 @@ const networks = [
     dbUrl: 'mongodb+srv://liltest:BI6H3uJRxYOsEsYr@cluster0.qtfou20.mongodb.net/',
     dbName: 'vaults',
   },
-  // Add more networks as needed
+  {
+    name: 'telos',
+    providerUrl: 'https://mainnet.telos.net/evm',
+    collectionName: 'telos',
+    dbUrl: 'mongodb+srv://liltest:BI6H3uJRxYOsEsYr@cluster0.qtfou20.mongodb.net/',
+    dbName: 'vaults',
+  },
 ];
 
 async function connectToDatabase(dbUrl) {
