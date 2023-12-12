@@ -50,6 +50,7 @@ const { MongoClient } = require('mongodb');
   setInterval(() => {
     updateTVLData('mantle');
     updateTVLData('manta-pacific');
+    updateTVLData('telos');
   }, 60000);
 })();
 
