@@ -82,6 +82,7 @@ app.get('/tvl_usd_sum', async (req, res) => {
     const database = client.db('vaults');
     const collection1 = database.collection('mantle');
     const collection2 = database.collection('manta-pacific');
+    const collection3 = database.collection('telos')
 
     const pipeline1 = [
       {
@@ -113,15 +114,32 @@ app.get('/tvl_usd_sum', async (req, res) => {
       },
     ];
 
-    const [result1, result2] = await Promise.all([
+    const pipeline3 = [
+      {
+        $group: {
+          _id: null,
+          totalCollection3: { $sum: '$tvlUSD' }, 
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          totalCollection3: 1,
+        },
+      },
+    ];
+
+    const [result1, result2, result3] = await Promise.all([
       collection1.aggregate(pipeline1).toArray(),
       collection2.aggregate(pipeline2).toArray(),
+      collection3.aggregate(pipeline3).toArray(),
     ]);
 
     client.close();
 
     const sum1 = result1[0]?.totalCollection1 || 0;
     const sum2 = result2[0]?.totalCollection2 || 0;
+    const sum3 = result3[0]?.totalCollection3 || 0;
     const combinedSum = sum1 + sum2;
 
     res.json({ sum: combinedSum });
@@ -142,11 +160,13 @@ app.get('/vaults', async (req, res) => {
 
     let collection1 = database.collection('mantle');
     let collection2 = database.collection('manta-pacific');
+    let collection3 = database.collection('telos');
 
     const projection = { _id: 0 };
 
     let data1 = [];
     let data2 = [];
+    let data3 = [];
 
     if (chainName === 'mantle') {
       collection1 = database.collection('mantle');
@@ -154,14 +174,20 @@ app.get('/vaults', async (req, res) => {
     } else if (chainName === 'manta-pacific') {
       collection2 = database.collection('manta-pacific');
       data2 = await collection2.find({}, projection).toArray();
-    } else {
+    } else if (chainName === 'telos') {
+      collection3 = database.collection('telos');
+      data3 = await collection3.find({}, projection).toArray();
+      
+    }
+    else {
       data1 = await collection1.find({}, projection).toArray();
       data2 = await collection2.find({}, projection).toArray();
+      data3 = await collection3.find({}, projection).toArray();
     }
 
     client.close();
 
-    res.json([...data1, ...data2]);
+    res.json([...data1, ...data2, ...data3]);
   } catch (error) {
     console.error('Error fetching TVL data:', error);
     res.status(500).json({ error: 'Internal Server Error' });
@@ -182,15 +208,17 @@ app.get('/vaults/dex', async (req, res) => {
 
     const collection1 = db.collection('mantle');
     const collection2 = db.collection('manta-pacific');
+    const collection3 = db.collection('telos');
 
     const projection = { _id: 0 };
 
     const data1 = await collection1.find({ dex: dexValue }, projection).toArray();
     const data2 = await collection2.find({ dex: dexValue }, projection).toArray();
+    const data3 = await collection3.find({ dex: dexValue }, projection).toArray();
 
     client.close();
 
-    res.json([...data1, ...data2]);
+    res.json([...data1, ...data2, ...data3]);
   } catch (error) {
     console.error('Error fetching data:', error);
     res.status(500).json({ error: 'Internal Server Error' });
