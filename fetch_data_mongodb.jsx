@@ -312,6 +312,7 @@ app.get('/quant', async (req, res) => {
     const db = client.db('vaults');
     const collection1 = db.collection('mantle');
     const collection2 = db.collection('manta-pacific');
+    const collection3 = db.collection('telos');
 
     const { value } = req.query; 
 
@@ -324,10 +325,11 @@ app.get('/quant', async (req, res) => {
 
     const data1 = await collection1.find(filter).toArray();
     const data2 = await collection2.find(filter).toArray();
+    const data3 = await collection3.find(filter).toArray();
 
     client.close();
 
-    res.json([...data1, ...data2]);
+    res.json([...data1, ...data2, ..data3]);
   } catch (error) {
     console.error('Error handling /quant route:', error);
     res.status(500).json({ error: 'Internal Server Error' });
