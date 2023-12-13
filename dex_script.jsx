@@ -13,6 +13,7 @@ async function updateStats() {
     const statsCollection = database.collection('stats');
     const tvlCollection = database.collection('mantle');
     const tvlMantaCollection = database.collection('manta-pacific');
+    const tvlTelosCollection = database.collection('telos');
 
     const statsDocuments = await statsCollection.find({}).toArray();
 
@@ -22,21 +23,24 @@ async function updateStats() {
 
       const tvlCount = await tvlCollection.countDocuments({ 'chain': chainNameStats, dex });
       const tvlMantaCount = await tvlMantaCollection.countDocuments({ 'chain': chainNameStats, dex });
+      const tvlTelosCount = await tvlTelosCollection.countDocuments({ 'chain': chainNameStats, dex });
 
       const tvlDocuments = await tvlCollection.find({ 'chain': chainNameStats, dex }).toArray();
       const tvlMantaDocuments = await tvlMantaCollection.find({ 'chain': chainNameStats, dex }).toArray();
+      const tvlTelosDocuments = await tvlTelosCollection.find({ 'chain': chainNameStats, dex }).toArray();
 
       const tvlSum = tvlDocuments.reduce((sum, tvlDoc) => sum + (tvlDoc.tvlUSD || 0), 0);
       const tvlMantaSum = tvlMantaDocuments.reduce((sum, tvlMantaDoc) => sum + (tvlMantaDoc.tvlUSD || 0), 0);
+      const tvlTelosSum = tvlTelosDocuments.reduce((sum, tvlTelosDoc) => sum + (tvlTelosDoc.tvlUSD || 0), 0);
 
-      const totalSum = tvlSum + tvlMantaSum;
+      const totalSum = tvlSum + tvlMantaSum + tvlTelosSum;
 
       
       await statsCollection.updateOne(
         { chain: chainNameStats, dex },
         {
           $set: {
-            totalVaults: tvlCount + tvlMantaCount, 
+            totalVaults: tvlCount + tvlMantaCount + tvlTelosCount, 
             tvlUSD: totalSum 
           }
         }
