@@ -329,7 +329,7 @@ app.get('/quant', async (req, res) => {
 
     client.close();
 
-    res.json([...data1, ...data2, ..data3]);
+    res.json([...data1, ...data2, ...data3]);
   } catch (error) {
     console.error('Error handling /quant route:', error);
     res.status(500).json({ error: 'Internal Server Error' });
