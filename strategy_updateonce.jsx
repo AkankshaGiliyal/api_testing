@@ -37,12 +37,12 @@ async function connectToDatabase(dbUrl) {
   }
 }
 
-async function fetchAddressesFromDB(client, dbName, collectionName) {
+async function fetchAddressesFromDB(client, dbName, chainName) {
   try {
     const db = client.db(dbName);
-    const collection = db.collection(collectionName);
+    const collection = db.collection('vault'); 
 
-    const addresses = await collection.distinct('strategy');
+    const addresses = await collection.distinct('strategy', { chain: chainName });
     return addresses;
   } catch (error) {
     console.error('Error fetching addresses from MongoDB:', error);
@@ -50,14 +50,14 @@ async function fetchAddressesFromDB(client, dbName, collectionName) {
   }
 }
 
-async function fetchTotalAssetsWithFunction(client, dbName, collectionName, address, abi, providerUrl) {
+async function fetchTotalAssetsWithFunction(client, dbName, address, abi, providerUrl, chainName) {
   try {
     const db = client.db(dbName);
-    const collection = db.collection(collectionName);
+    const collection = db.collection('vault');
     const provider = new ethers.providers.JsonRpcProvider(providerUrl);
     const contract = new ethers.Contract(address, abi, provider);
 
-    const existingDocument = await collection.findOne({ "strategy": address });
+    const existingDocument = await collection.findOne({ "strategy": address, "chain": chainName });
     const updateData = {};
 
     if (!existingDocument || !existingDocument.nonfungiblePositionManager) {
@@ -132,7 +132,7 @@ async function fetchTotalAssetsWithFunction(client, dbName, collectionName, addr
     
 
     if (Object.keys(updateData).length > 0) {
-      const filter = { "strategy": address };
+      const filter = { "strategy": address, "chain": chainName };
       const updateDocument = { $set: updateData };
 
       const result = await collection.updateOne(filter, updateDocument);
@@ -151,16 +151,16 @@ async function fetchTotalAssetsWithFunction(client, dbName, collectionName, addr
 }
 
 async function updateTotalAssetsForNetwork(network) {
-  const { providerUrl, collectionName, dbUrl, dbName } = network;
+  const { providerUrl, dbUrl, dbName, name } = network;
   let client;
 
   try {
     client = await connectToDatabase(dbUrl);
 
-    const addresses = await fetchAddressesFromDB(client, dbName, collectionName);
+    const addresses = await fetchAddressesFromDB(client, dbName, name);
 
     for (const address of addresses) {
-      await fetchTotalAssetsWithFunction(client, dbName, collectionName, address, mntABI, providerUrl);
+      await fetchTotalAssetsWithFunction(client, dbName, address, mntABI, providerUrl, name);
     }
   } catch (error) {
     console.error(`Error updating total assets for ${network.name}:`, error);
