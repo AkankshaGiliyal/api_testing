@@ -72,7 +72,7 @@ app.get('/tvl_usd_sum', async (req, res) => {
   }
 });
 
-aapp.get('/vaults', async (req, res) => {
+app.get('/vaults', async (req, res) => {
   try {
     const chainName = req.query.chain;
 
