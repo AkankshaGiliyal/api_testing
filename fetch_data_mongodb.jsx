@@ -75,6 +75,7 @@ app.get('/tvl_usd_sum', async (req, res) => {
 app.get('/vaults', async (req, res) => {
   try {
     const chainName = req.query.chain;
+    const vaultAddress = req.query.vaultAddress;
 
     const client = new MongoClient(uri, { useUnifiedTopology: true });
     await client.connect();
@@ -86,8 +87,13 @@ app.get('/vaults', async (req, res) => {
     let data = [];
 
     if (chainName) {
-     
-      const filter = { chain: chainName }; 
+      
+      const filter = { chain: chainName };
+
+      data = await collection.find(filter, projection).toArray();
+    } else if (vaultAddress) {
+      
+      const filter = { vaultAddress: vaultAddress };
 
       data = await collection.find(filter, projection).toArray();
     } else {
