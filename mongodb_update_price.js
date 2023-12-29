@@ -21,12 +21,14 @@ let fetch;
         const collection = database.collection('coingecko');
 
         for (const item of data.data) {
-          const { id, attributes: { price_usd } } = item;
+          const { id, attributes: { price_usd, decimals, symbol } } = item;
           const extractedId = id.split('_')[1];
 
           await collection.updateOne(
             { denominationAssetAddress: extractedId },
-            { $set: { priceUSD: price_usd } },
+            { $set: { priceUSD: price_usd, 
+              denominationDecimals: decimals,
+              denominationAsset: symbol } },
             { upsert: true }
           );
           console.log(`Updated document with id: ${extractedId}`);
@@ -48,7 +50,6 @@ let fetch;
   const apiUrl1 = 'https://api.geckoterminal.com/api/v2/networks/mantle/tokens/multi/0x201eba5cc46d216ce6dc03f6a759e8e766e956ae%2C0x09bc4e0d864854c6afb6eb9a9cdf58ac190d0df9%2C0xdeaddeaddeaddeaddeaddeaddeaddeaddead1111';
   const apiUrl2 = 'https://api.geckoterminal.com/api/v2/networks/manta-pacific/tokens/multi/0xf417f5a458ec102b90352f697d6e2ac3a3d2851f%2C0xb73603c5d87fa094b7314c74ace2e64d165016fb%2C0x0dc808adce2099a9f62aa87d9670745aba741746';
   const apiUrl3 = 'https://api.geckoterminal.com/api/v2/networks/tlos/tokens/multi/0xD102cE6A4dB07D247fcc28F366A623Df0938CA9E%2C0x975Ed13fa16857E83e7C493C7741D556eaaD4A3f';
-
   // Run every 10 minutes
   setInterval(() => {
     fetchDataAndUpdate(apiUrl1);
@@ -58,8 +59,6 @@ let fetch;
 
   
 })();
-
-
 
 
 
