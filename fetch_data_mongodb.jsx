@@ -81,23 +81,24 @@ app.get('/vaults', async (req, res) => {
     await client.connect();
 
     const database = client.db('vaults');
-    const collection = database.collection('vault'); // Use the 'test' collection
+    const collection = database.collection('vault');
 
     const projection = { _id: 0 };
     let data = [];
 
+    const filter = {};
+
     if (chainName) {
-      
-      const filter = { chain: chainName };
+      filter.chain = chainName;
+    }
 
-      data = await collection.find(filter, projection).toArray();
-    } else if (vaultAddress) {
-      
-      const filter = { vaultAddress: vaultAddress };
+    if (vaultAddress) {
+      filter.vaultAddress = vaultAddress;
+    }
 
+    if (Object.keys(filter).length > 0) {
       data = await collection.find(filter, projection).toArray();
     } else {
-      
       data = await collection.find({}, projection).toArray();
     }
 
@@ -109,6 +110,7 @@ app.get('/vaults', async (req, res) => {
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+
 
 
 app.get('/vaults/dex', async (req, res) => {
