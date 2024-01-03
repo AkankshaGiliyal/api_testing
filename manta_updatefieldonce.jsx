@@ -1,8 +1,10 @@
-
 const { ethers } = require('ethers');
 const { MongoClient } = require('mongodb');
 const mntABI = require('./ABI.jsx');
-const provider = new ethers.providers.JsonRpcProvider("https://pacific-rpc.manta.network/http");
+
+const provider1 = new ethers.providers.JsonRpcProvider("https://pacific-rpc.manta.network/http");
+const provider2 = new ethers.providers.JsonRpcProvider("https://rpc.mantle.xyz");
+const provider3 = new ethers.providers.JsonRpcProvider("https://mainnet.telos.net/evm")
 
 const dbUrl = 'mongodb+srv://liltest:BI6H3uJRxYOsEsYr@cluster0.qtfou20.mongodb.net/';
 const dbName = 'vaults';
@@ -18,96 +20,85 @@ async function connectToDatabase() {
   }
 }
 
-async function fetchTotalAssetsWithFunction(client, address) {
+async function fetchDataFromContract(client, address, provider, collectionName, chainName) {
   try {
     const db = client.db(dbName);
-    const collection = db.collection('manta-pacific');
+    const collection = db.collection(collectionName);
 
     const contract = new ethers.Contract(address, mntABI, provider);
 
-    const existingDocument = await collection.findOne({ "vaultAddress": address });
+    const name = await contract.name();
+    const symbol = await contract.symbol();
+    const owner = await contract.owner();
+    const strategy = await contract.strategy();
 
-    const updateData = {};
+    const name1 = name.toString();
+    const symbol1 = symbol.toString();
+    const owner1 = owner.toString();
+    const strategy1 = strategy.toString();
 
-    if (!existingDocument || !existingDocument.name) {
-      const name = await contract.name();
-      updateData.name = name.toString();
-    }
+    const filter = { "vaultAddress": address, "chain": chainName };
+    const updateDocument = {
+      $set: { 
+        name: name1, 
+        symbol: symbol1, 
+        owner: owner1,
+        strategy: strategy1,
+        chain: chainName  
+      },
+    };
 
-    if (!existingDocument || !existingDocument.symbol) {
-      const symbol = await contract.symbol();
-      updateData.symbol = symbol.toString();
-    }
+    const result = await collection.updateOne(filter, updateDocument, { upsert: true });
 
-    if (!existingDocument || !existingDocument.owner) {
-      const owner = await contract.owner();
-      updateData.owner = owner.toString();
-    }
-
-    if (!existingDocument || !existingDocument.strategy) {
-      const strategy = await contract.strategy();
-      updateData.strategy = strategy.toString();
-    }
-
-    if (Object.keys(updateData).length > 0) {
-      const filter = { "vaultAddress": address };
-      const updateDocument = {
-        $set: updateData,
-      };
-
-      const result = await collection.updateOne(filter, updateDocument);
-
-      if (result.modifiedCount === 1) {
-        console.log(`Data for ${address} updated in MongoDB:`, updateData);
-      } else {
-        console.error(`Document for ${address} not found in MongoDB.`);
-      }
+    if (result.modifiedCount === 1 || result.upsertedCount === 1) {
+      console.log(`Data for ${address} (${chainName}) updated/inserted in MongoDB:`, { name1, symbol1, owner1, strategy1 });
     } else {
-      console.log(`Data for ${address} is already up-to-date.`);
+      console.error(`Document for ${address} (${chainName}) not updated/inserted in MongoDB.`);
     }
   } catch (error) {
-    console.error(`Error fetching and updating data for ${address}:`, error);
+    console.error(`Error fetching and updating data for ${address} (${chainName}):`, error);
   }
 }
 
-async function fetchAddressesFromDB(client) {
+async function watchCollectionForChanges(client, collectionName, chainName) {
   try {
     const db = client.db(dbName);
-    const collection = db.collection('manta-pacific');
+    const collection = db.collection(collectionName);
 
-    const addresses = await collection.distinct('vaultAddress');
+    const changeStream = collection.watch();
 
-    return addresses;
+    changeStream.on('change', async (change) => {
+      if (change.operationType === 'insert') {
+        const newDocument = change.fullDocument;
+        const { vaultAddress } = newDocument;
+
+        await fetchDataFromContract(client, vaultAddress, provider, collectionName, chainName);
+      }
+    });
+
+    console.log(`Watching for changes in ${collectionName} collection for ${chainName} chain...`);
   } catch (error) {
-    console.error('Error fetching addresses from MongoDB:', error);
+    console.error('Error watching collection for changes:', error);
     throw error;
   }
 }
 
-async function updateTotalAssets() {
+async function runWatchers() {
   let client;
+
   try {
     client = await connectToDatabase();
+    console.log('Connected to the database.');
 
-    const addresses = await fetchAddressesFromDB(client);
-
-    for (const address of addresses) {
-      await fetchTotalAssetsWithFunction(client, address);
-    }
+    await watchCollectionForChanges(client, 'vault', 'manta-pacific');
+    await watchCollectionForChanges(client, 'vault', 'mantle');
+    await watchCollectionForChanges(client, 'vault', 'telos');
   } catch (error) {
-    console.error('Error updating total assets:', error);
-  } finally {
-    if (client) {
-      await client.close();
-    }
+    console.error('Error running watchers:', error);
   }
 }
 
-updateTotalAssets();
-
-const interval = setInterval(async () => {
-  await updateTotalAssets();
-}, 10 * 60 * 1000);
+runWatchers();
 
 
 
